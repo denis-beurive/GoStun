@@ -1,0 +1,261 @@
+
+
+== Description ==
+
+This repository contains a simple implementation of the STUN protocol, as describes by RFCs 3489 and 5389.
+
+Please note that the implementation is not complete. Among the implementation's limitations, we can point :
+* The implementation covers the client's side of the protocol : that is, the discovery process.
+* The implementation does not cover the shared secret feature.
+
+However, it can be used with many public servers for basic operations. If you need to determine the kind of NAT you are sitting behind, you can use this implementation with many public servers.
+
+The implementation has been tested with the servers listed in the following document :
+
+http://www.voip-info.org/wiki/view/STUN
+
+Furthermore, I could not test the implementation with all kind of NATs, since I don't have access to all kinds of NATs.
+
+Please let me know if you find a bug in the discovery process, for a particular kind of NAT.
+
+== Build instructions ==
+
+To build the package:
+
+<code>go build stun</code>
+
+To build the test client:
+
+<code>go install main</code>
+
+== The test client ==
+
+<code>bin/main -host provserver.televolution.net -verbose 1</code>
+
+This will generate a nice output:
+
+  Host           : provserver.televolution.net
+  Port           : 3478
+  IPs            : IP0 = 64.62.233.26
+  
+  Using transport address "64.62.233.26:3478".
+  
+  Test I
+  
+  Sending REQUEST to "64.62.233.26:3478"
+  
+      00 01 00 18
+      21 12 a4 42
+      01 02 03 04
+      05 06 07 08
+      09 10 11 12
+      80 22 00 0c
+      54 65 73 74
+      43 6c 69 65
+      6e 74 30 31
+      80 28 00 04
+      24 90 1b 19
+  
+      Type                 : 0x0001 (BINDING_REQUEST)
+      Length               : 24 (0x0018)
+      Cookie               : 0x2112a442
+      ID                   : 01 02 03 04 05 06 07 08 09 10 11 12
+      Number of attributes : 2
+      Attribute number     : 1 (total length 16)
+      Type                 : 0x8022 (SOFTWARE)
+      length               : 12
+      Value                : 54 65 73 74 43 6c 69 65 6e 74 30 31
+      Decode               : TestClient01
+      Attribute number     : 2 (total length 8)
+      Type                 : 0x8028 (FINGERPRINT)
+      length               : 4
+      Value                : 24 90 1b 19
+      Decode               : 0x24901b19
+  
+      Timeout (0200 ms) exceeded, retry...
+  
+  Received
+  
+      01 01 00 48
+      21 12 a4 42
+      01 02 03 04
+      05 06 07 08
+      09 10 11 12
+      00 01 00 08
+      00 01 e9 c8
+      59 53 26 3a
+      00 04 00 08
+      00 01 0d 96
+      40 3e e9 1a
+      00 05 00 08
+      00 01 0d 97
+      40 3e e9 1b
+  
+      Type                 : 0x0101 (BINDING_RESPONSE)
+      Length               : 72 (0x0048)
+      Cookie               : 0x2112a442
+      ID                   : 01 02 03 04 05 06 07 08 09 10 11 12
+      Number of attributes : 3
+      Attribute number     : 1 (total length 12)
+      Type                 : 0x0001 (MAPPED_ADDRESS)
+      length               : 8
+      Value                : 00 01 e9 c8 59 53 26 3a
+      Decode               : IPV4: 89.83.38.58:59848
+      Attribute number     : 2 (total length 12)
+      Type                 : 0x0004 (SOURCE_ADDRESS)
+      length               : 8
+      Value                : 00 01 0d 96 40 3e e9 1a
+      Decode               : IPV4: 64.62.233.26:3478
+      Attribute number     : 3 (total length 12)
+      Type                 : 0x0005 (CHANGED_ADDRESS)
+      length               : 8
+      Value                : 00 01 0d 97 40 3e e9 1b
+      Decode               : IPV4: 64.62.233.27:3479
+  
+  Mapped address           : 89.83.38.58:59848
+  Xored mapped address     : No xored mapped address given
+  Local address            : 192.168.1.20:49737
+  Change IP                : 64.62.233.27
+  Change port              : 3479
+  Result                   : Got a response for test I. Test I is not OK.
+  Conclusion               : We are behind a NAT.
+  
+  Test II.
+  
+  Sending REQUEST to "64.62.233.26:3478"
+  
+      00 01 00 20
+      21 12 a4 42
+      01 02 03 04
+      05 06 07 08
+      09 10 11 12
+      80 22 00 0c
+      54 65 73 74
+      43 6c 69 65
+      6e 74 30 31
+      00 03 00 04
+      00 00 00 06
+      80 28 00 04
+      bc 59 9b c5
+  
+      Type                 : 0x0001 (BINDING_REQUEST)
+      Length               : 32 (0x0020)
+      Cookie               : 0x2112a442
+      ID                   : 01 02 03 04 05 06 07 08 09 10 11 12
+      Number of attributes : 3
+      Attribute number     : 1 (total length 16)
+      Type                 : 0x8022 (SOFTWARE)
+      length               : 12
+      Value                : 54 65 73 74 43 6c 69 65 6e 74 30 31
+      Decode               : TestClient01
+      Attribute number     : 2 (total length 8)
+      Type                 : 0x0003 (CHANGE_REQUEST)
+      length               : 4
+      Value                : 00 00 00 06
+      Decode               : Change IP: YES Change port: YES
+      Attribute number     : 3 (total length 8)
+      Type                 : 0x8028 (FINGERPRINT)
+      length               : 4
+      Value                : bc 59 9b c5
+      Decode               : 0xbc599bc5
+  
+      Timeout (0200 ms) exceeded, retry...
+      Timeout (0400 ms) exceeded, retry...
+      Timeout (0800 ms) exceeded, retry...
+      Timeout (1600 ms) exceeded, retry...
+      Timeout (1600 ms) exceeded, retry...
+      Timeout (1600 ms) exceeded, retry...
+      Timeout (1600 ms) exceeded, retry...
+      Timeout (1600 ms) exceeded, retry...
+      Timeout (1600 ms) exceeded, retry...
+      Timeout (1600 ms) exceeded, retry...
+      Timeout (1600 ms) exceeded, retry...
+      Timeout (1600 ms) exceeded, retry...
+  
+  Result                   : Got no response for test II. Test II is not OK.
+  Conclusion               : Perform Test I again. This time, server's transport address is "64.62.233.27:3479"
+  
+  Test I
+  
+  Sending REQUEST to "64.62.233.27:3479"
+  
+      00 01 00 18
+      21 12 a4 42
+      01 02 03 04
+      05 06 07 08
+      09 10 11 12
+      80 22 00 0c
+      54 65 73 74
+      43 6c 69 65
+      6e 74 30 31
+      80 28 00 04
+      24 90 1b 19
+  
+      Type                 : 0x0001 (BINDING_REQUEST)
+      Length               : 24 (0x0018)
+      Cookie               : 0x2112a442
+      ID                   : 01 02 03 04 05 06 07 08 09 10 11 12
+      Number of attributes : 2
+      Attribute number     : 1 (total length 16)
+      Type                 : 0x8022 (SOFTWARE)
+      length               : 12
+      Value                : 54 65 73 74 43 6c 69 65 6e 74 30 31
+      Decode               : TestClient01
+      Attribute number     : 2 (total length 8)
+      Type                 : 0x8028 (FINGERPRINT)
+      length               : 4
+      Value                : 24 90 1b 19
+      Decode               : 0x24901b19
+  
+      Timeout (0200 ms) exceeded, retry...
+  
+  Received
+  
+      01 01 00 48
+      21 12 a4 42
+      01 02 03 04
+      05 06 07 08
+      09 10 11 12
+      00 01 00 08
+      00 01 d2 47
+      59 53 26 3a
+      00 04 00 08
+      00 01 0d 97
+      40 3e e9 1b
+      00 05 00 08
+      00 01 0d 96
+      40 3e e9 1a
+  
+      Type                 : 0x0101 (BINDING_RESPONSE)
+      Length               : 72 (0x0048)
+      Cookie               : 0x2112a442
+      ID                   : 01 02 03 04 05 06 07 08 09 10 11 12
+      Number of attributes : 3
+      Attribute number     : 1 (total length 12)
+      Type                 : 0x0001 (MAPPED_ADDRESS)
+      length               : 8
+      Value                : 00 01 d2 47 59 53 26 3a
+      Decode               : IPV4: 89.83.38.58:53831
+      Attribute number     : 2 (total length 12)
+      Type                 : 0x0004 (SOURCE_ADDRESS)
+      length               : 8
+      Value                : 00 01 0d 97 40 3e e9 1b
+      Decode               : IPV4: 64.62.233.27:3479
+      Attribute number     : 3 (total length 12)
+      Type                 : 0x0005 (CHANGED_ADDRESS)
+      length               : 8
+      Value                : 00 01 0d 96 40 3e e9 1a
+      Decode               : IPV4: 64.62.233.26:3478
+  
+  Mapped address           : 89.83.38.58:53831
+  Xored mapped address     : No xored mapped address given
+  Local address            : 192.168.1.20:52444
+  Result                   : Got a response for test I. Test I is not OK.
+  Conclusion               : We are behind a symetric NAT.
+  
+  CONCLUSION
+  
+  We are behind a symetric NAT.
+  
+  
+  
