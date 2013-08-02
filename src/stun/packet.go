@@ -15,12 +15,14 @@
 
 package stun
 
-import "bytes"
-import "encoding/binary"
-import "fmt"
-import "errors"
-import "strings"
-import "tools"
+import (
+	"bytes"
+	"encoding/binary"
+	"errors"
+	"fmt"
+	"github.com/denis-beurive/GoStun/src/tools"
+	"strings"
+)
 
 // STUN's magic cookie.
 const STUN_MAGIC_COOKIE = 0x2112A442

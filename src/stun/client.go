@@ -15,11 +15,11 @@
 
 package stun
 
-import "fmt"
-import "net"
-
-// import "errors"
-import "tools"
+import (
+	"fmt"
+	"github.com/denis-beurive/GoStun/src/tools"
+	"net"
+)
 
 var client_initialized bool = false
 var server_transport_address string

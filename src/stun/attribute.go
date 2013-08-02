@@ -15,13 +15,15 @@
 
 package stun
 
-import "encoding/binary"
-import "unicode/utf8"
-import "hash/crc32"
-import "bytes"
-import "tools"
-import "errors"
-import "fmt"
+import (
+	"bytes"
+	"encoding/binary"
+	"errors"
+	"fmt"
+	"github.com/denis-beurive/GoStun/src/tools"
+	"hash/crc32"
+	"unicode/utf8"
+)
 
 // IP family is IPV4
 const STUN_ATTRIBUT_FAMILY_IPV4 = 0x01

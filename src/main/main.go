@@ -15,13 +15,15 @@
 
 package main
 
-import "stun"
-import "fmt"
-import "os"
-import "net"
-import "flag"
-import "strconv"
-import "tools"
+import (
+	"flag"
+	"fmt"
+	"github.com/denis-beurive/GoStun/src/stun"
+	"github.com/denis-beurive/GoStun/src/tools"
+	"net"
+	"os"
+	"strconv"
+)
 
 func main() {
 	var err error

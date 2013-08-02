@@ -15,12 +15,14 @@
 
 package stun
 
-import "fmt"
-import "tools"
-import "errors"
-import "time"
-import "net"
-import "strings"
+import (
+	"errors"
+	"fmt"
+	"github.com/denis-beurive/GoStun/src/tools"
+	"net"
+	"strings"
+	"time"
+)
 
 // Verbosity level for the STUN package.
 var verbosity int = 0
