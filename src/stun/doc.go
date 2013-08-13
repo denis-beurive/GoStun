@@ -7,7 +7,7 @@ package stun
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
@@ -65,22 +65,22 @@ func main() {
 	var ips []string
 	var ip string
 	var nat int
-		
+
 	// Parse the command line.
 	flag.Parse()
-	
+
 	if ("" == *serverHost) {
 		fmt.Println("ERROR: You must specify the host name of the STUN server (option -host).")
 		os.Exit(1)
 	}
-	
+
 	// Lookup the host name.
 	ips, err = net.LookupHost(*serverHost)
 	if nil != err {
 		fmt.Println(fmt.Sprintf("ERROR: %s", err))
 		os.Exit(1)
 	}
-	
+
 	if 0 == len(ips) {
 		fmt.Println(fmt.Sprintf("ERROR: Can not lookup host \"%s\".", *serverHost))
 		os.Exit(1)
@@ -93,32 +93,32 @@ func main() {
 		fmt.Println(fmt.Sprintf("% -15s: IP%d = %s", " ", i, ips[i]))
 	}
 	fmt.Println("\n\n")
-	
+
 	if len(ips) > 1 {
 		fmt.Println(fmt.Sprintf("The given host name is associated to %d IP addresses.", len(ips)))
 		fmt.Println(fmt.Sprintf("Which one should I use?"))
-		
-		
+
+
 		for {
 			var response string
 			var idx int
-			
-			fmt.Println(fmt.Sprintf("\nPlease, enter an integer between 0 (for IP0) and %d (for IP%d).", len(ips)-1, len(ips)))	
+
+			fmt.Println(fmt.Sprintf("\nPlease, enter an integer between 0 (for IP0) and %d (for IP%d).", len(ips)-1, len(ips)))
 			fmt.Scanln(&response)
-			
+
 			idx, err = strconv.Atoi(response)
 			if (nil != err) {
 				fmt.Println(fmt.Sprintf("The given value (%s) is not valid.", response))
 				continue;
 			}
-			
+
 			if (idx<0) || (idx>=len(ips)) {
 				fmt.Println(fmt.Sprintf("The given value (%d) is not valid.", idx))
 				continue;
 			}
 
 			ip, err = tools.MakeTransportAddress(ips[idx], *serverPort)
-			_ = err 
+			_ = err
 			break;
 		}
 	} else {
@@ -126,20 +126,20 @@ func main() {
 		_ = err
 	}
 	fmt.Println(fmt.Sprintf("\nUsing transport address \"%s\".\n", ip))
-	
+
 	// Perform discovery.
 	stun.ClientInit(ip)
 	stun.ActivateOutput(*verbosityLevel, nil)
-	
+
 	nat, err = stun.ClientDiscover()
 	if (nil != err) {
 		fmt.Println(fmt.Sprintf("An error occured: %s", err))
 		os.Exit(1)
 	}
-	
+
 	// Print result.
 	fmt.Println("\n\nCONCLUSION\n")
-	
+
 	switch nat {
 		case stun.STUN_NAT_ERROR:
 			fmt.Println(fmt.Sprintf("Test failed: %s", err))

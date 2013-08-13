@@ -4,7 +4,7 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
@@ -25,8 +25,7 @@ const STUN_RFC_5389 = 0
 var rfc int = STUN_RFC_3489
 
 // Set RFC to 3489.
-func  SetRfc3489() { rfc = STUN_RFC_3489 }
+func SetRfc3489() { rfc = STUN_RFC_3489 }
 
 // Set RFC to 5389
-func  SetRfc5389() { rfc = STUN_RFC_5389 }
-
+func SetRfc5389() { rfc = STUN_RFC_5389 }

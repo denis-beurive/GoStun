@@ -4,7 +4,7 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
@@ -41,24 +41,30 @@ func InetSplit(in_inet string) (out_ip string, out_port int, out_err error) {
 	var port int
 	var data []string
 	var ipv4, ipv6 *regexp.Regexp
-	
-	ipv4, err = regexp.Compile("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):(\\d{1,5})$");
-	if (nil != err) { panic("Internal error.") }
-	
-	ipv6, err = regexp.Compile("^\\[([0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4})\\]:(\\d{1,5})$");
-	if (nil != err) { panic("Internal error.") }
-	
+
+	ipv4, err = regexp.Compile("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):(\\d{1,5})$")
+	if nil != err {
+		panic("Internal error.")
+	}
+
+	ipv6, err = regexp.Compile("^\\[([0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4})\\]:(\\d{1,5})$")
+	if nil != err {
+		panic("Internal error.")
+	}
+
 	// Is it IPV4 or IPV6?
 	data = ipv4.FindStringSubmatch(in_inet)
-	if (nil == data) {
+	if nil == data {
 		data = ipv6.FindStringSubmatch(in_inet)
-		if (nil == data) {
+		if nil == data {
 			return "", -1, errors.New(fmt.Sprintf("Invalid IP address \"%s\". Can not determine the address' family.", in_inet))
 		}
 	}
-	
+
 	port, err = strconv.Atoi(data[2])
-	if (nil != err) { return "", -1, errors.New(fmt.Sprintf("Invalid INET address \"%s\". The port number is not valid (\"%s\"). It is not an integer.", in_inet, data[2]))  }
+	if nil != err {
+		return "", -1, errors.New(fmt.Sprintf("Invalid INET address \"%s\". The port number is not valid (\"%s\"). It is not an integer.", in_inet, data[2]))
+	}
 	return data[1], port, nil
 }
 
@@ -78,38 +84,50 @@ func IpToBytes(in_ip string) (out_bytes []byte, out_err error) {
 	var length int
 	var res []byte = make([]byte, 0, 16)
 	var data []string
-	
+
 	// Try IPV4.
 	data = strings.Split(in_ip, ".")
-	if (1 == len(data))	{ // Try IPV6
+	if 1 == len(data) { // Try IPV6
 		data = strings.Split(in_ip, ":")
 	}
-	
+
 	length = len(data)
-	if ((4 != length) && (8 != length)) { return nil, errors.New(fmt.Sprintf("Invalid IP address \"%s\".", in_ip))  }
-	if (4 == length) { max = 255 } else { max = 65535 }
-	
-	for i:=0; i<length; i++ {
+	if (4 != length) && (8 != length) {
+		return nil, errors.New(fmt.Sprintf("Invalid IP address \"%s\".", in_ip))
+	}
+	if 4 == length {
+		max = 255
+	} else {
+		max = 65535
+	}
+
+	for i := 0; i < length; i++ {
 		buf := new(bytes.Buffer)
-		
-		if (4 == length) { // IPV4
+
+		if 4 == length { // IPV4
 			dot, err = strconv.ParseUint(data[i], 10, 64)
 		} else { // IPV6
 			dot, err = strconv.ParseUint(data[i], 16, 64)
 		}
-		
-		if (nil != err) { return nil, errors.New(fmt.Sprintf("Invalid IP address \"%s\".", in_ip)) }
-		if ((dot > max) || (dot < 0)) { return nil, errors.New(fmt.Sprintf("Invalid IP address \"%s\".", in_ip)) }
-		err	= binary.Write(buf, binary.BigEndian, uint16(dot))
-		if (nil != err) { panic("Internal error") }
-		
-		if (4 == length) { // IPV4
+
+		if nil != err {
+			return nil, errors.New(fmt.Sprintf("Invalid IP address \"%s\".", in_ip))
+		}
+		if (dot > max) || (dot < 0) {
+			return nil, errors.New(fmt.Sprintf("Invalid IP address \"%s\".", in_ip))
+		}
+		err = binary.Write(buf, binary.BigEndian, uint16(dot))
+		if nil != err {
+			panic("Internal error")
+		}
+
+		if 4 == length { // IPV4
 			res = append(res, buf.Bytes()[1])
 		} else { // IPV6
 			res = append(res, buf.Bytes()...)
 		}
 	}
-	
+
 	return res, nil
 }
 
@@ -125,29 +143,37 @@ func BytesToIp(in_bytes []byte) (string, error) {
 	var ip []string = make([]string, 0, 8)
 	var family int = 0
 	var res string
-	
-	if (4  == len(in_bytes)) { family = 4 }
-	if (16 == len(in_bytes)) { family = 6 }
-	if (0  == family)        { return "", errors.New("Invalid list of bytes: this does not represent an IP!") }
-	
-	if (4 == family) {
-		for i := range(in_bytes) {
+
+	if 4 == len(in_bytes) {
+		family = 4
+	}
+	if 16 == len(in_bytes) {
+		family = 6
+	}
+	if 0 == family {
+		return "", errors.New("Invalid list of bytes: this does not represent an IP!")
+	}
+
+	if 4 == family {
+		for i := range in_bytes {
 			ip = append(ip, strconv.Itoa(int(in_bytes[i])))
 		}
 		res = strings.Join(ip, ".")
 	}
-	
-	if (6 == family) {
+
+	if 6 == family {
 		var err error
 		for i := 0; i < 8; i++ {
 			var dot uint16
 			err = binary.Read(bytes.NewBuffer(in_bytes[i*2:(i+1)*2]), binary.BigEndian, &dot)
-			if (nil != err) { return "", err }
+			if nil != err {
+				return "", err
+			}
 			ip = append(ip, fmt.Sprintf("%04x", dot))
 		}
 		res = strings.Join(ip, ":")
 	}
-	
+
 	return res, nil
 }
 
@@ -163,23 +189,26 @@ func BytesToIp(in_bytes []byte) (string, error) {
 func MakeTransportAddress(in_ip string, in_port int) (string, error) {
 	var ipv4, ipv6 *regexp.Regexp
 	var err error
-	
-	ipv4, err = regexp.Compile("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$");
-	if (nil != err) { panic("Internal error.") }
-	
-	ipv6, err = regexp.Compile("^[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}$");
-	if (nil != err) { panic("Internal error.") }
-	
+
+	ipv4, err = regexp.Compile("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$")
+	if nil != err {
+		panic("Internal error.")
+	}
+
+	ipv6, err = regexp.Compile("^[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}$")
+	if nil != err {
+		panic("Internal error.")
+	}
+
 	// Is it IPV4?
-	if (ipv4.MatchString(in_ip)) {
+	if ipv4.MatchString(in_ip) {
 		return fmt.Sprintf("%s:%d", in_ip, in_port), nil
 	}
-	
+
 	// Is it IPV6?
-	if (ipv6.MatchString(in_ip)) {
+	if ipv6.MatchString(in_ip) {
 		return fmt.Sprintf("[%s]:%d", in_ip, in_port), nil
 	}
-		
-	return "", errors.New(fmt.Sprintf("Invalid IP address \"%s\"!", in_ip))	
-} 
 
+	return "", errors.New(fmt.Sprintf("Invalid IP address \"%s\"!", in_ip))
+}
