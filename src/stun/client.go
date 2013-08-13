@@ -263,7 +263,7 @@ func ClientSendChangeRequest(in_change_ip bool) (requestResponse, error) {
 // OUTPUT
 // - The response.
 // - The error flag.
-func ClientTest1(in_destination_address *string) (testResponse, error) {
+func ClientTest1(in_destination_address *string) (testResponse, string, uint16, error) {
 	var err, err_mapped error
 	var ip_mapped, ip_xored_mapped string
 	var family_mapped, family_xored_mapped, port_mapped, port_xored_mapped uint16
@@ -277,10 +277,10 @@ func ClientTest1(in_destination_address *string) (testResponse, error) {
 
 	response.request, err = ClientSendBinding(in_destination_address)
 	if nil != err {
-		return response, err
+		return response, ip_mapped, port_mapped, err
 	}
 	if !response.request.response {
-		return response, nil
+		return response, ip_mapped, port_mapped, nil
 	}
 
 	// Extracts the mapped address and the XORED mapped address.
@@ -289,7 +289,7 @@ func ClientTest1(in_destination_address *string) (testResponse, error) {
 	_ = family_mapped // Really not used
 	found, family_mapped, ip_mapped, port_mapped, err = response.request.packet.GetMappedAddress()
 	if (nil != err) || (!found) {
-		return response, err
+		return response, ip_mapped, port_mapped, err
 	}
 	found, family_xored_mapped, ip_xored_mapped, port_xored_mapped, err = response.request.packet.GetXorMappedAddress()
 
@@ -314,7 +314,7 @@ func ClientTest1(in_destination_address *string) (testResponse, error) {
 
 	ip_mapped, err = tools.MakeTransportAddress(ip_mapped, int(port_mapped))
 	if nil != err {
-		return response, err
+		return response, ip_mapped, port_mapped, err
 	}
 
 	// Extracts the transport address "CHANGED-ADDRESS".
@@ -322,7 +322,7 @@ func ClientTest1(in_destination_address *string) (testResponse, error) {
 	// So we consider that the lake of this attribute is not an error.
 	info.changed_address_found, info.changed_address_family, info.changed_ip, info.changed_port, err = response.request.packet.GetChangedAddress()
 	if nil != err {
-		return response, err
+		return response, ip_mapped, port_mapped, err
 	}
 
 	// Compare local IP with mapped IP.
@@ -332,7 +332,7 @@ func ClientTest1(in_destination_address *string) (testResponse, error) {
 	info.identical = response.request.transport_local == ip_mapped
 	response.extra = info
 
-	return response, nil
+	return response, ip_mapped, port_mapped, nil
 }
 
 // Perform Test II.
@@ -390,10 +390,12 @@ func CientTest3() (testResponse, error) {
 // OUTPUT
 // - The type of NAT we are behind from.
 // - The error flag.
-func ClientDiscover() (int, error) {
+func ClientDiscover() (int, string, uint16, error) {
 	var err error
 	var changer_transport string
 	var test1_response, test2_response, test3_response testResponse
+	var ip_mapped string
+	var port_mapped uint16
 
 	// RFC 3489: The client begins by initiating test I.  If this test yields no
 	// response, the client knows right away that it is not capable of UDP
@@ -406,17 +408,17 @@ func ClientDiscover() (int, error) {
 	/// TEST I (a)
 	/// ----------
 
-	test1_response, err = ClientTest1(nil)
+	test1_response, ip_mapped, port_mapped, err = ClientTest1(nil)
 
 	if nil != err {
-		return STUN_NAT_ERROR, err
+		return STUN_NAT_ERROR, ip_mapped, port_mapped, err
 	}
 	if !test1_response.request.response {
 		if verbosity > 0 {
 			tools.AddText(output, fmt.Sprintf("% -25s%s", "Result:", "Got no response for test I."))
 			tools.AddText(output, fmt.Sprintf("% -25s%s", "Conclusion:", "UDP is blocked."))
 		}
-		return STUN_NAT_BLOCKED, err
+		return STUN_NAT_BLOCKED, ip_mapped, port_mapped, err
 	}
 
 	// Save "changed transport address" for later test.
@@ -428,14 +430,14 @@ func ClientDiscover() (int, error) {
 		}
 		changer_transport, err = tools.MakeTransportAddress(test1_response.extra.(test1Info).changed_ip, int(test1_response.extra.(test1Info).changed_port))
 		if nil != err {
-			return STUN_NAT_ERROR, err
+			return STUN_NAT_ERROR, ip_mapped, port_mapped, err
 		}
 	} else {
 		if verbosity > 0 {
 			tools.AddText(output, fmt.Sprintf("% -25s: %s", "Result", "The response does not contain any \"changed\" address."))
 			tools.AddText(output, fmt.Sprintf("% -25s: %s", "Conclusion", "The only thing we can say is that we are behind a NAT.\n"))
 		}
-		return STUN_NAT_UNKNOWN, nil
+		return STUN_NAT_UNKNOWN, ip_mapped, port_mapped, nil
 	}
 
 	if !test1_response.extra.(test1Info).identical { // Test I (a): The local transport address is different than the mapped transport address.
@@ -455,7 +457,7 @@ func ClientDiscover() (int, error) {
 
 		test2_response, err = CientTest2()
 		if nil != err {
-			return STUN_NAT_ERROR, err
+			return STUN_NAT_ERROR, ip_mapped, port_mapped, err
 		}
 		if !test2_response.request.response { // Test II (a): We did not receive any valid response from the server.
 
@@ -472,9 +474,9 @@ func ClientDiscover() (int, error) {
 			/// TEST I (b)
 			/// ----------
 
-			test1_response, err = ClientTest1(&changer_transport)
+			test1_response, ip_mapped, port_mapped, err = ClientTest1(&changer_transport)
 			if nil != err {
-				return STUN_NAT_ERROR, err
+				return STUN_NAT_ERROR, ip_mapped, port_mapped, err
 			}
 			if !test1_response.request.response {
 				// No response from the server. This should not happend.
@@ -482,7 +484,7 @@ func ClientDiscover() (int, error) {
 					tools.AddText(output, fmt.Sprintf("% -25s: %s", "Result", "Got no response for test I. This is unexpected!"))
 					tools.AddText(output, fmt.Sprintf("% -25s: %s", "Conclusion", "The only thing we can say is that we are behind a NAT.\n"))
 				}
-				return STUN_NAT_UNKNOWN, nil
+				return STUN_NAT_UNKNOWN, ip_mapped, port_mapped, nil
 			}
 
 			if !test1_response.extra.(test1Info).identical { // Test I (b)
@@ -490,7 +492,7 @@ func ClientDiscover() (int, error) {
 					tools.AddText(output, fmt.Sprintf("% -25s: %s", "Result", "Got a response for test I. Test I is not OK."))
 					tools.AddText(output, fmt.Sprintf("% -25s: %s", "Conclusion", "We are behind a symetric NAT.\n"))
 				}
-				return STUN_NAT_SYMETRIC, nil
+				return STUN_NAT_SYMETRIC, ip_mapped, port_mapped, nil
 			} else { // Test I (b)
 
 				if verbosity > 0 {
@@ -504,20 +506,20 @@ func ClientDiscover() (int, error) {
 
 				test3_response, err = CientTest3()
 				if nil != err {
-					return STUN_NAT_ERROR, err
+					return STUN_NAT_ERROR, ip_mapped, port_mapped, err
 				}
 				if !test3_response.request.response {
 					if verbosity > 0 {
 						tools.AddText(output, fmt.Sprintf("% -25s: %s", "Result", "Got no response for test III."))
 						tools.AddText(output, fmt.Sprintf("% -25s: %s", "Conclusion", "We are behind a \"port sestricted\" NAT.\n"))
 					}
-					return STUN_NAT_PORT_RESTRICTED, nil
+					return STUN_NAT_PORT_RESTRICTED, ip_mapped, port_mapped, nil
 				} else {
 					if verbosity > 0 {
 						tools.AddText(output, fmt.Sprintf("% -25s: %s", "Result", "Got a response for test III."))
 						tools.AddText(output, fmt.Sprintf("% -25s: %s", "Conclusion", "We are behind a \"restricted\" NAT.\n"))
 					}
-					return STUN_NAT_RESTRICTED, nil
+					return STUN_NAT_RESTRICTED, ip_mapped, port_mapped, nil
 				}
 
 				// End of branch.
@@ -530,10 +532,10 @@ func ClientDiscover() (int, error) {
 				tools.AddText(output, fmt.Sprintf("% -25s: %s", "Result", "Test II is OK."))
 				tools.AddText(output, fmt.Sprintf("% -25s: %s", "Conclusion", "We are behind a \"full cone\" NAT.\n"))
 			}
-			return STUN_NAT_FULL_CONE, nil
+			return STUN_NAT_FULL_CONE, ip_mapped, port_mapped, nil
 		}
 
-		return 0, nil
+		return 0, ip_mapped, port_mapped, nil
 	} else { // Test I (a): The local transport address is identical to the mapped transport address.
 
 		// RFC 3489: If this address and port are the same
@@ -556,22 +558,22 @@ func ClientDiscover() (int, error) {
 
 		test2_response, err = CientTest2()
 		if nil != err {
-			return STUN_NAT_ERROR, err
+			return STUN_NAT_ERROR, ip_mapped, port_mapped, err
 		}
 		if test2_response.request.response { //
 			if verbosity > 0 {
 				tools.AddText(output, fmt.Sprintf("% -25s: %s", "Result", "Got a response for test II.\n"))
 				tools.AddText(output, fmt.Sprintf("% -25s: %s", "Conclusion", "We are *not* behind a NAT."))
 			}
-			return STUN_NAT_NO_NAT, nil
+			return STUN_NAT_NO_NAT, ip_mapped, port_mapped, nil
 		}
 
 		if verbosity > 0 {
 			tools.AddText(output, fmt.Sprintf("% -25s: %s", "Result", "Got no response for test II.\n"))
 			tools.AddText(output, fmt.Sprintf("% -25s: %s", "Conclusion", "We are behind a symmetric UDP firewall."))
 		}
-		return STUN_NAT_SYMETRIC_UDP_FIREWALL, nil
+		return STUN_NAT_SYMETRIC_UDP_FIREWALL, ip_mapped, port_mapped, nil
 	}
 
-	return 2, nil
+	return 2, ip_mapped, port_mapped, nil
 }
